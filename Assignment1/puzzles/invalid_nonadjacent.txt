@@ -1,0 +1,10 @@
+# Malformed input: inequality endpoints are not adjacent
+SIZE
+4
+
+GIVENS
+1,1,1
+2,2,2
+
+INEQUALITIES
+1,1,<,1,3

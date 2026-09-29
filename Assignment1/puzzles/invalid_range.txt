@@ -1,0 +1,8 @@
+# Malformed input: given value is out of range
+SIZE
+4
+
+GIVENS
+1,1,5
+
+INEQUALITIES
