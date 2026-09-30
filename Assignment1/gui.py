@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-
 from load_puzzle_file import parse_puzzle, validate_puzzle
-from solver import BackTrackingSolver, ENHANCED_BT, BASIC_BT
+from solver import BackTrackingSolver, EnhancedBackTrackingSolver, ENHANCED_BT, BASIC_BT
+import time
 
 
 def display_puzzle(parent, puzzle_data):
@@ -204,11 +204,19 @@ class FutoshikiGUI:
         self.root.update_idletasks()
 
         print(f"Selected solver: {selected_solver}")
-        # TODO: connect Task 2 / Task 3 solver here.
-        # BackTrackingSolver(selected_solver, self.puzzle_data)
         try:
-            solver = BackTrackingSolver(selected_solver, self.puzzle_data)
-            ans = solver.run()
+            start = time.perf_counter()
+            if selected_solver == BASIC_BT:
+                solver = BackTrackingSolver(self.puzzle_data)
+            elif selected_solver == ENHANCED_BT:
+                solver = EnhancedBackTrackingSolver(self.puzzle_data)
+            else:
+                raise ValueError(f"Solver_name {selected_solver} is error.")
+            ans = solver.run(start)
+            self.display_status(ans["status"])
+            if ans["solution"] is not None:
+                self.display_solution(ans["solution"])
+            self.display_metrics(ans["runtime"], ans["nodes"])
         except (ValueError, OSError) as error:
             self.puzzle_data = None
             self.cell_widgets = {}
@@ -228,16 +236,17 @@ class FutoshikiGUI:
             for col in range(1, self.puzzle_data["size"] + 1):
                 value = solution[row - 1][col - 1]
                 cell = self.cell_widgets[(row, col)]
-
                 if (row, col) in given_cells:
                     cell.config(
                         text=str(value),
                         font=("Arial", 16, "bold"),
+                        fg="black",
                     )
                 else:
                     cell.config(
                         text=str(value),
                         font=("Arial", 16),
+                        fg="blue",
                     )
 
     def display_status(self, status):
