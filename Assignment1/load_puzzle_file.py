@@ -1,3 +1,8 @@
+OPERATOR_LESS = "<"
+OPERATOR_MORE = ">"
+OPERATOR_UNEQUAL = "!="
+
+
 def parse_puzzle(filename):
     size = None
     given_matrix = []
@@ -57,7 +62,7 @@ def parse_puzzle(filename):
                     raise ValueError(
                         f"Line {i}: INEQUALITIES contains an invalid integer."
                     )
-                if operator not in ("<", ">"):
+                if operator not in (OPERATOR_LESS, OPERATOR_MORE):
                     raise ValueError(
                         f"Line {i}: Invalid operator '{operator}'. "
                         f"Only '<' or '>' are allowed."
@@ -78,7 +83,7 @@ def parse_puzzle(filename):
     return {"size": size, "givens": given_matrix, "inequalities": inequalities}
 
 
-def validate_puzzle(puzzle_data):
+def validate_origin_puzzle(puzzle_data):
     size = puzzle_data["size"]
     given_matrix = puzzle_data["givens"]
     inequalities = puzzle_data["inequalities"]
@@ -123,3 +128,58 @@ def validate_puzzle(puzzle_data):
         tmp_row[row - 1].add(val)
         tmp_col[col - 1].add(val)
     return
+
+
+def satisfy_constraints(x_value, y_value, operators):
+    for operator in operators:
+        if operator == OPERATOR_UNEQUAL:
+            if x_value == y_value:
+                return False
+        elif operator == OPERATOR_LESS:
+            if x_value >= y_value:
+                return False
+        elif operator == OPERATOR_MORE:
+            if x_value <= y_value:
+                return False
+        else:
+            return False
+    return True
+
+
+def validate_solution(solution_data):
+    size = solution_data["size"]
+    # givens = solution_data["givens"]
+    inequalities = solution_data["inequalities"]
+    solution = solution_data["solution"]
+    status = solution_data["status"]
+    if status != "Solved":
+        return False
+
+    if len(solution) != size:
+        return False
+    for row in solution:
+        if len(row) != size:
+            return False
+
+    # Check rows
+    for row in solution:
+        if len(set(row)) != size:
+            return False
+        if min(row) < 1 or max(row) > size:
+            return False
+
+    # Check columns
+    for col in range(size):
+        column = [solution[row][col] for row in range(size)]
+        if len(set(column)) != size:
+            return False
+        if min(column) < 1 or max(column) > size:
+            return False
+
+    for row1, col1, operator, row2, col2 in inequalities:
+        v1 = solution[row1 - 1][col1 - 1]
+        v2 = solution[row2 - 1][col2 - 1]
+        if not satisfy_constraints(v1, v2, [operator]):
+            return False
+
+    return True

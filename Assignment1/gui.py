@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from load_puzzle_file import parse_puzzle, validate_puzzle
+from load_puzzle_file import parse_puzzle, validate_origin_puzzle, validate_solution
 from solver import BackTrackingSolver, EnhancedBackTrackingSolver, ENHANCED_BT, BASIC_BT
 import time
 
@@ -168,7 +168,7 @@ class FutoshikiGUI:
             return
         try:
             puzzle = parse_puzzle(filename)
-            validate_puzzle(puzzle)
+            validate_origin_puzzle(puzzle)
         except (ValueError, OSError) as error:
             self.puzzle_data = None
             self.cell_widgets = {}
@@ -213,9 +213,17 @@ class FutoshikiGUI:
             else:
                 raise ValueError(f"Solver_name {selected_solver} is error.")
             ans = solver.run(start)
-            self.display_status(ans["status"])
+            print(ans)
             if ans["solution"] is not None:
                 self.display_solution(ans["solution"])
+                is_valid = validate_solution(ans)
+                if is_valid:
+                    print("Solution verification: VALID")
+                else:
+                    print("Solution verification: INVALID")
+            self.display_status(ans["status"])
+            # if ans["solution"] is not None:
+            #     self.display_solution(ans["solution"])
             self.display_metrics(ans["runtime"], ans["nodes"])
         except (ValueError, OSError) as error:
             self.puzzle_data = None

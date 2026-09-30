@@ -7,15 +7,10 @@ from collections import defaultdict, deque
 BASIC_BT = "Basic Backtracking"
 ENHANCED_BT = "AC-3 Enhanced Backtracking"
 
-OPERATOR_LESS = "<"
-OPERATOR_MORE = ">"
-OPERATOR_UNEQUAL = "!="
-TIMEOUT = 60
-
 
 class FutoshikiSolver:
-    def __init__(self, puzzle_data):
-        # self.solver_name = solver_name
+    def __init__(self, puzzle_data, timeout_thr=60):
+        self.timeout_thr = timeout_thr
         self.puzzle_data = puzzle_data
         self.size = puzzle_data["size"]
         self.givens = puzzle_data["givens"]
@@ -48,19 +43,6 @@ class FutoshikiSolver:
 
     def switch_op(self, operator):
         return OPERATOR_MORE if operator == OPERATOR_LESS else OPERATOR_LESS
-
-    def satisfy_constraints(self, x_value, y_value, operators):
-        for operator in operators:
-            if operator == OPERATOR_UNEQUAL:
-                if x_value == y_value:
-                    return False
-            elif operator == OPERATOR_LESS:
-                if x_value >= y_value:
-                    return False
-            elif operator == OPERATOR_MORE:
-                if x_value <= y_value:
-                    return False
-        return True
 
     def get_inequalities_direction(self):
         pass
@@ -99,8 +81,8 @@ class FutoshikiSolver:
 
 
 class BackTrackingSolver(FutoshikiSolver):
-    def __init__(self, puzzle_data):
-        super().__init__(puzzle_data)
+    def __init__(self, puzzle_data, timeout_thr=60):
+        super().__init__(puzzle_data, timeout_thr)
 
     def get_inequalities_direction(self):
         inequalities_direction_dict = defaultdict(list)
@@ -148,27 +130,30 @@ class BackTrackingSolver(FutoshikiSolver):
         return inequalities_direction_dict
 
     def backtracking(self, start_time):
-        def check_valid(i, j, v):
-            if (i, j) not in self.inequalities_direction_dict:
+        def check_valid(node, value):
+            if node not in self.inequalities_direction_dict:
                 return True
-            val_curr = v
-            for pos, operation in self.inequalities_direction_dict[(i, j)]:
-                compare_val = self.puzzle_matrix[pos[0]][pos[1]]
-                if not self.satisfy_constraints(val_curr, compare_val, [operation]):
+            val_curr = value
+            for pos, operation in self.inequalities_direction_dict[node]:
+                r, c = pos[0], pos[1]
+                if not satisfy_constraints(
+                    val_curr, self.puzzle_matrix[r][c], [operation]
+                ):
                     return False
             return True
 
         def dfs(id, st):
-            if time.perf_counter() - start_time >= TIMEOUT:
+            if time.perf_counter() - start_time >= self.timeout_thr:
                 raise TimeoutError
             if id == len(ans_matrix):
                 return True
             i, j = ans_matrix[id]
+            node = (i, j)
             for v in range(1, self.size + 1):
-                if v in row_col_dup_val[(i, j)]:
+                if v in row_col_dup_val[node]:
                     continue
                 self.nodes_visited += 1
-                if not check_valid(i, j, v):
+                if not check_valid(node, v):
                     continue
 
                 self.puzzle_matrix[i][j] = v
@@ -201,8 +186,8 @@ class BackTrackingSolver(FutoshikiSolver):
 
 
 class EnhancedBackTrackingSolver(FutoshikiSolver):
-    def __init__(self, puzzle_data):
-        super().__init__(puzzle_data)
+    def __init__(self, puzzle_data, timeout_thr=60):
+        super().__init__(puzzle_data, timeout_thr)
         self.domains = self.init_domains()
 
     def get_inequalities_direction(self):
@@ -244,60 +229,59 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
                     domains[(i, j)] = set(range(1, self.size + 1))
         return domains
 
-    def order_values(self, var, domains):
+    def get_neighbors(self, node):
+        return {neighbor for neighbor, _ in self.inequalities_direction_dict[node]}
+
+    def get_neighbor_operators(self, node, neighbor):
+        return [
+            operator
+            for n, operator in self.inequalities_direction_dict[node]
+            if n == neighbor
+        ]
+
+    def order_values(self, node, domains):
         values = []
-        neighbors = {neighbor for neighbor, _ in self.inequalities_direction_dict[var]}
-        for value in sorted(domains[var]):
-            eliminated = 0
+        neighbors = self.get_neighbors(node)
+        for v in sorted(domains[node]):
+            removed_count = 0
             for neighbor in neighbors:
-                operators = [
-                    operator
-                    for n, operator in self.inequalities_direction_dict[var]
-                    if n == neighbor
-                ]
-                for neighbor_value in domains[neighbor]:
-                    if not self.satisfy_constraints(value, neighbor_value, operators):
-                        eliminated += 1
-            values.append((eliminated, value))
+                operators = self.get_neighbor_operators(node, neighbor)
+                for neighbor_val in domains[neighbor]:
+                    if not satisfy_constraints(v, neighbor_val, operators):
+                        removed_count += 1
+            values.append((removed_count, v))
 
         # Least constraining value first
-        values.sort()
+        values.sort(key=lambda x: x[0])
 
         return [value for eliminated, value in values]
 
     def select_variable(self, domains):
+        def degree(x):
+            neighbors = self.get_neighbors(x)
+            return sum(1 for neighbor in neighbors if len(domains[neighbor]) > 1)
+
         candidates = [x for x in domains if len(domains[x]) > 1]
         if not candidates:
             return None
-
-        def degree(x):
-            neighbors = {
-                neighbor for neighbor, _ in self.inequalities_direction_dict[x]
-            }
-            return sum(1 for neighbor in neighbors if len(domains[neighbor]) > 1)
 
         # MRV first: smallest domain
         # Degree second: most unassigned neighbors
         return min(candidates, key=lambda x: (len(domains[x]), -degree(x)))
 
-    def revise(self, domains, x, y):
+    def revise_node_domain(self, domains, x, y):
         # Get all constraints between x and y
-        operators = [
-            operator
-            for neighbor, operator in self.inequalities_direction_dict[x]
-            if neighbor == y
-        ]
-
-        # No constraints
+        operators = self.get_neighbor_operators(x, y)
+        # No constraints, no need to revise
         if not operators:
             return False
 
-        revised = False
+        revise = False
         values_to_remove = set()
         for x_value in domains[x]:
             supported = False
             for y_value in domains[y]:
-                if self.satisfy_constraints(x_value, y_value, operators):
+                if satisfy_constraints(x_value, y_value, operators):
                     supported = True
                     break
             # No value in Y can support x_value
@@ -306,12 +290,12 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
 
         if values_to_remove:
             domains[x] -= values_to_remove
-            revised = True
+            revise = True
 
-        return revised
+        return revise
 
     def ac3(self, domains, start_time, initial_queue=None):
-        if not initial_queue:
+        if initial_queue is None:
             inequalities_pairs = {
                 (x, y)
                 for x in self.inequalities_direction_dict
@@ -323,10 +307,10 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
 
         while queue:
             # timeout check
-            if time.perf_counter() - start_time >= TIMEOUT:
+            if time.perf_counter() - start_time >= self.timeout_thr:
                 raise TimeoutError
             x, y = queue.popleft()
-            if self.revise(domains, x, y):
+            if self.revise_node_domain(domains, x, y):
                 # Empty domain -> failure
                 if not domains[x]:
                     return False
@@ -341,7 +325,7 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
         # Recursive search
         def dfs(domains):
             # timeout
-            if time.perf_counter() - start_time >= TIMEOUT:
+            if time.perf_counter() - start_time >= self.timeout_thr:
                 raise TimeoutError
             # Complete assignment
             if all(
@@ -357,21 +341,20 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
                 return True
 
             # MRV + Degree
-            var = self.select_variable(domains)
+            selected_node = self.select_variable(domains)
 
             # LCV
-            for value in self.order_values(var, domains):
+            for value in self.order_values(selected_node, domains):
                 # One node = one attempted value assignment
                 self.nodes_visited += 1
-                # Copy domains
+
                 new_domains = {x: set(values) for x, values in domains.items()}
-                # Tentative assignment
-                new_domains[var] = {value}
+                new_domains[selected_node] = {value}
                 # AC-3 on affected arcs
                 # Since var changed, check: neighbor -> var
                 affected_arcs = {
-                    (neighbor, var)
-                    for neighbor, _ in self.inequalities_direction_dict[var]
+                    (neighbor, selected_node)
+                    for neighbor, _ in self.inequalities_direction_dict[selected_node]
                 }
                 if not self.ac3(new_domains, start_time, affected_arcs):
                     continue
