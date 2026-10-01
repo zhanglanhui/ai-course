@@ -264,7 +264,7 @@ class FutoshikiGUI:
         if runtime is None:
             self.runtime_label.config(text="Runtime: --")
         else:
-            self.runtime_label.config(text=f"Runtime: {runtime:.4f} s")
+            self.runtime_label.config(text=f"Runtime: {runtime:.6f} s")
 
         if nodes is None:
             self.nodes_label.config(text="Nodes visited: --")

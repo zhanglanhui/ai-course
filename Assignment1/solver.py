@@ -188,7 +188,8 @@ class BackTrackingSolver(FutoshikiSolver):
 class EnhancedBackTrackingSolver(FutoshikiSolver):
     def __init__(self, puzzle_data, timeout_thr=60):
         super().__init__(puzzle_data, timeout_thr)
-        self.domains = self.init_domains()
+        # # Initialize domains
+        # self.domains = self.init_domains()
 
     def get_inequalities_direction(self):
         inequalities_direction_dict = defaultdict(list)
@@ -254,7 +255,7 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
         # Least constraining value first
         values.sort(key=lambda x: x[0])
 
-        return [value for eliminated, value in values]
+        return [value for removed_count, value in values]
 
     def select_variable(self, domains):
         def degree(x):
@@ -337,7 +338,7 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
                     [next(iter(domains[(i, j)])) for j in range(self.size)]
                     for i in range(self.size)
                 ]
-                self.domains = domains
+                # self.domains = domains
                 return True
 
             # MRV + Degree
@@ -347,27 +348,23 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
             for value in self.order_values(selected_node, domains):
                 # One node = one attempted value assignment
                 self.nodes_visited += 1
-
+                # try new node, and set new domain
                 new_domains = {x: set(values) for x, values in domains.items()}
                 new_domains[selected_node] = {value}
                 # AC-3 on affected arcs
-                # Since var changed, check: neighbor -> var
-                affected_arcs = {
+                # Since node changed, check: neighbor -> node
+                affected_nodes = {
                     (neighbor, selected_node)
                     for neighbor, _ in self.inequalities_direction_dict[selected_node]
                 }
-                if not self.ac3(new_domains, start_time, affected_arcs):
+                if not self.ac3(new_domains, start_time, affected_nodes):
                     continue
                 # Continue recursively
                 if dfs(new_domains):
                     return True
-            # If failed: new_domains is simply discarded.
-            # This is our restore operation.
             return False
 
-        # Initialize domains
         domains = self.init_domains()
-
         # Initial AC-3 propagation
         if not self.ac3(domains, start_time):
             return False
