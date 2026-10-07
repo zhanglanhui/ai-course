@@ -240,6 +240,7 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
             if n == neighbor
         ]
 
+    # LCV
     def order_values(self, node, domains):
         values = []
         neighbors = self.get_neighbors(node)
@@ -257,6 +258,7 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
 
         return [value for removed_count, value in values]
 
+    # MRV
     def select_variable(self, domains):
         def degree(x):
             neighbors = self.get_neighbors(x)
@@ -322,6 +324,7 @@ class EnhancedBackTrackingSolver(FutoshikiSolver):
 
         return True
 
+    # Enhanced Backtracking
     def backtracking(self, start_time):
         # Recursive search
         def dfs(domains):
