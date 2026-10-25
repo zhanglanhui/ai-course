@@ -1,0 +1,11 @@
+COSC-4117EL Assignment 2 - Value Iteration
+Layout seed: 42
+Pickup position: (2, 2)
+Packing position: (0, 4)
+Charging dock position: (6, 0)
+Discount factor gamma: 0.95
+Convergence threshold theta: 1e-06
+Evaluation episodes per p: 500
+The max-step limit is used during policy evaluation; it is not included as a state variable in this stationary Value Iteration model.
+The supplied environment's step() is deterministic, so the stochastic transition/reward model is implemented in this file for Value Iteration.
+See value_iteration_results.csv and policy_action_changes.txt for results.

@@ -1,0 +1,15 @@
+States where the preferred action changes as p decreases
+Actions are listed in order p=1.00, p=0.90, p=0.80.
+
+state=(2, 9, 1, 1): p=1.00 -> left, p=0.90 -> down, p=0.80 -> down
+state=(5, 1, 1, 1): p=1.00 -> down, p=0.90 -> left, p=0.80 -> left
+state=(5, 5, 1, 1): p=1.00 -> up, p=0.90 -> down, p=0.80 -> down
+state=(5, 9, 0, 0): p=1.00 -> up, p=0.90 -> left, p=0.80 -> left
+state=(5, 9, 1, 1): p=1.00 -> up, p=0.90 -> left, p=0.80 -> left
+state=(7, 4, 1, 1): p=1.00 -> down, p=0.90 -> up, p=0.80 -> up
+state=(8, 2, 1, 0): p=1.00 -> up, p=0.90 -> right, p=0.80 -> right
+state=(8, 6, 1, 0): p=1.00 -> up, p=0.90 -> down, p=0.80 -> down
+state=(8, 8, 1, 0): p=1.00 -> up, p=0.90 -> right, p=0.80 -> right
+state=(9, 2, 1, 1): p=1.00 -> up, p=0.90 -> left, p=0.80 -> left
+state=(9, 3, 1, 1): p=1.00 -> up, p=0.90 -> left, p=0.80 -> left
+state=(9, 4, 1, 1): p=1.00 -> up, p=0.90 -> left, p=0.80 -> left
