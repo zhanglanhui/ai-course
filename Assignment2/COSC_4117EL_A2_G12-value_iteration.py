@@ -53,9 +53,9 @@ def build_states(grid) -> List[State]:
 
 
 def transition_for_actual_action(
-        state: State,
-        actual_action: str,
-        world,
+    state: State,
+    actual_action: str,
+    world,
 ) -> Tuple[State, float, bool]:
     """Apply one actual direction and return (next_state, reward, terminal)."""
     row, col, has_package, delivered = state
@@ -65,7 +65,7 @@ def transition_for_actual_action(
 
     # Blocked movement leaves the robot in place and incurs the extra penalty.
     if not world.in_bounds(next_row, next_col) or not world.passable(
-            next_row, next_col
+        next_row, next_col
     ):
         next_row, next_col = row, col
         reward += domain.INVALID_MOVE_PENALTY
@@ -130,10 +130,10 @@ def value_iteration(world, p: float, gamma: float = GAMMA, theta: float = THETA)
             for action in ACTIONS:
                 action_value = 0.0
                 for (
-                        probability,
-                        next_state,
-                        reward,
-                        terminal_after_step,
+                    probability,
+                    next_state,
+                    reward,
+                    terminal_after_step,
                 ) in stochastic_outcomes(state, action, p, world):
                     # All next states are valid/passable because collision leaves
                     # the robot in its current cell. Guard protects future edits.
@@ -168,15 +168,15 @@ def value_iteration(world, p: float, gamma: float = GAMMA, theta: float = THETA)
         for action in ACTIONS:
             action_value = 0.0
             for (
-                    probability,
-                    next_state,
-                    reward,
-                    terminal_after_step,
+                probability,
+                next_state,
+                reward,
+                terminal_after_step,
             ) in stochastic_outcomes(state, action, p, world):
                 if (
-                        next_state not in state_set
-                        or terminal_after_step
-                        or next_state in terminal_states
+                    next_state not in state_set
+                    or terminal_after_step
+                    or next_state in terminal_states
                 ):
                     next_value = 0.0
                 else:
@@ -191,7 +191,7 @@ def value_iteration(world, p: float, gamma: float = GAMMA, theta: float = THETA)
 
 
 def evaluate_policy(
-        world, policy: Dict[State, str], p: float, episodes: int, seed: int
+    world, policy: Dict[State, str], p: float, episodes: int, seed: int
 ):
     """Monte Carlo evaluation under the same stochastic movement probability."""
     reward_totals: List[float] = []
