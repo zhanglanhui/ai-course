@@ -3,9 +3,14 @@ Layout seed: 42
 Pickup position: (2, 2)
 Packing position: (0, 4)
 Charging dock position: (6, 0)
+State representation: (row, col, has_package, delivered, steps_remaining)
+Number of states: 27951
+Maximum episode length: 120
 Discount factor gamma: 0.95
 Convergence threshold theta: 1e-06
 Evaluation episodes per p: 500
-The max-step limit is used during policy evaluation; it is not included as a state variable in this stationary Value Iteration model.
-The supplied environment's step() is deterministic, so the stochastic transition/reward model is implemented in this file for Value Iteration.
+Terminal states: successful return to the charging dock after delivery, or steps_remaining == 0.
+Terminal states have zero future value; the reward on the transition into a terminal state is retained.
+The supplied environment's step() is deterministic; stochastic outcomes are explicitly enumerated by this Value Iteration implementation.
+The transition reward follows the supplied environment's reward checks, including invalid-move and resulting-cell congestion penalties.
 See value_iteration_results.csv and policy_action_changes.txt for results.
